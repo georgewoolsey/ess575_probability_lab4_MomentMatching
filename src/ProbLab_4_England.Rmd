@@ -269,6 +269,8 @@ n <- 50
 d_binom <- dbinom(x = x, p = phi, size = n)
 ```
 
+## Answer
+
 \textcolor{blue}{If you visited 50 counties the probability that 5 would contain a plant, conditional on the hypothesis that $\phi=0.04$ and assuming the data are }\textcolor{teal}{binomially distributed: }`r round(d_binom, 4)`
 
 # Question 5
@@ -279,6 +281,7 @@ Plot the probability of the data for $y = 1...50$ counties with coal plants out 
 x <- seq(0, 50)
 phi <- 0.04
 n <- 50
+# PMF
 y <- dbinom(x = x, p = phi, size = n)
 # plot
 ggplot(data = data.frame(x, y), mapping = aes(x = x, y = y)) +
@@ -288,13 +291,77 @@ ggplot(data = data.frame(x, y), mapping = aes(x = x, y = y)) +
   ) + 
   xlab(latex2exp::TeX("$y$")) +
   ylab(latex2exp::TeX("$Pr(y | \\phi)$")) +
+  scale_x_continuous(labels = scales::label_comma(accuracy = 1) ) +
   theme_bw()
 ```
 
 # Question 6
 
+What is the probability that at least 5 counties have a coal plant, conditional on the hypothesis that $\phi=0.04$?
+
+$$
+\begin{aligned}
+\Pr\bigl(y \geq 5 \mid \phi, n=50\bigr) = \\ 
+\sf{binomial}\mathrm{\bigl(y \geq5 \mid \phi=0.04,n=50\bigr) =}\\
+\sum_{y_{i}\in(5,6, \ldots ,50)} \binom{50}{y_{i}} \bigl(0.04 \bigr)^{y_{i}} \bigl( 1 - 0.04 \bigr)^{50-y_{i}}\\
+\end{aligned}
+$$
 
 
+```{r}
+q <- 4
+p <- 0.04
+n <- 50
+# CDF
+p_binom_inv = 1 - pbinom(q = q, p = p, size = n)
+```
+
+## Answer
+
+\textcolor{blue}{The probability that at least 5 counties have a coal plant, conditional on the hypothesis that $\phi=0.04$ and assuming the data are }\textcolor{teal}{binomially distributed: }`r round(p_binom_inv, 4)`
+
+# Question 7
+
+Plot the probability that fewer than y counties contain plants where y takes on values between 1 and 10. Condition of the probability of occupancy $\phi=0.04$?
+
+```{r}
+x <- seq(0, 10)
+phi <- 0.04
+n <- 50
+# CDF
+y <- pbinom(q = x-1, p = phi, size = n)
+# plot
+ggplot(data = data.frame(x, y), mapping = aes(x = x, y = y)) +
+  geom_point(
+    fill = "gray15"
+    , size = 4
+  ) + 
+  xlab(latex2exp::TeX("$y$")) +
+  ylab(latex2exp::TeX("$Pr(Y \\leq y | \\phi)$")) +
+  scale_x_continuous(labels = scales::label_comma(accuracy = 1) ) +
+  theme_bw()
+```
+
+# Question 8
+
+Simulate data for 75 counties (no coal plant = 0, coal plant = 1).
+
+$$
+\begin{aligned}
+y \sim \sf{binomial}\mathrm{(1, \phi) \equiv y \sim} \, \sf{Bernoulli}\mathrm{(\phi)}
+\end{aligned}
+$$
+
+```{r}
+n <- 75
+size <- 1
+phi <- 0.04
+# random generation
+rand <- rbinom(n = n, size = size, prob = phi)
+has_plant <- ifelse(rand == 1, "coal plant", "no coal plant")
+table(has_plant)
+if(length(rand == 1)>0){print(paste0("county ", which(rand %in% c(1)), " has a coal plant" ))}
+```
 
 
 # Question 9
