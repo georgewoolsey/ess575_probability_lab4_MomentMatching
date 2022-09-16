@@ -44,15 +44,19 @@ knitr::opts_chunk$set(
 set.seed(10)
 ```
 
+# Introduction
+
 When we say *support*, we are referring to the values of a random variable for which probability density or probability exceed 0 and are defined. The support of lognormal distribution is continuous and strictly non-negative, which makes it particularly useful in ecology. Moreover, it is often useful because it is asymmetric, allowing for values that are extreme in the positive direction. Finally, it is useful for representing products of random variables. The central limit theorem would predict that the distribution of sums of random variables will be normal, no matter how each is individually distributed. The products of random variables will be lognormally distributed regardless of their individual distributions.
 
 If a random variable is lognormally distributed then the log of that random variable is normally distributed (conversely, if you exponentiate a normal random variable it generates a lognormal random variable). The first parameter of the lognormal distribution is the mean of the random variable on the log scale (i.e., $\alpha$ on cheat sheet, `meanlog` in R) and the second parameter is the variance (or sometimes the standard deviation) of the random variable on the log scale (i.e., $\beta$ on cheatsheet, `sdlog` in R). We often predict the median of the distribution with our deterministic model, which means that we can use the log of the median as the first parameter because
 
-\begin{eqnarray}
-z \sim  \sf{lognormal}(\alpha,\beta)\\
-\sf{median}(z) = e^{\alpha}\\
-\sf{log}(\sf{median}(z)) = \alpha
-\end{eqnarray}
+$$
+\begin{aligned}
+z \sim  \sf{lognormal}\mathrm{(\alpha,\beta)}\\
+\sf{median}\mathrm{(z) = e^{\alpha}}\\
+\sf{log}\mathrm{(\sf{median}(z)) = \alpha}
+\end{aligned}
+$$
 
 # Question 1
 
@@ -70,7 +74,7 @@ dist_norm <- rnorm(n = n, mean = mean, sd = sd)
 dist_lognorm <- rlnorm(n = n, meanlog = mean, sdlog = sd)
 
 # plot historgram norm
-  p_norm <- 
+  plt_norm <- 
     ggplot(data = data.frame(dist_norm), aes(x = dist_norm)) +
     geom_histogram(
       aes(y = ..density..)
@@ -92,7 +96,7 @@ dist_lognorm <- rlnorm(n = n, meanlog = mean, sdlog = sd)
     theme_bw()
 
 # plot historgram log-norm
-  p_lognorm <- 
+  plt_lognorm <- 
     ggplot(data = data.frame(dist_lognorm), aes(x = dist_lognorm)) +
     geom_histogram(
       aes(y = ..density..)
@@ -115,7 +119,7 @@ dist_lognorm <- rlnorm(n = n, meanlog = mean, sdlog = sd)
 
 # combine charts
   ggpubr::ggarrange(
-      p_norm, p_lognorm
+      plt_norm, plt_lognorm
       , nrow = 1
       , ncol = 2
     )
@@ -124,6 +128,8 @@ dist_lognorm <- rlnorm(n = n, meanlog = mean, sdlog = sd)
 mean_lognorm <- exp(mean + sd^2/2)
 var_lognorm <- (exp(sd^2) - 1) * exp(2*mean + sd^2)
 ```
+
+## Answers
 
 Find the mean and variance of the lognormal distribution using moment matching. Check your moment-matched values empirically with the simulated data. 
 
@@ -139,7 +145,157 @@ The moment-matched values and the empirical values are close for the mean, but l
 
 \textcolor{blue}{The moment-matched values and the empirical values for the mean and variance are close but less so for the variance than the mean. This occurs because the variance of the lognormal distribution is a product of two exponential functions. When we simulate the data using $\sf{rlnorm}$ in R, increasing the number of simulated values results in the moment-matched values approaching the emprical values as $n$ approaches $+\infty$. }
 
-# Question 2 - Question 8
+# Question 2
+
+The average above ground biomass in a grazing allotment of sagebrush grassland is `103.4 g/m^2^`, with a standard deviation ($\sigma$) of `23`. You clip a `1 m^2^` plot. You assumed a normal distribution for this problem in Probability Lab #2. Now redo the problem with a more appropriate distribution. Write out the model for the probability density of the data point. What is the probability density of an observation of `94` assuming the data are gamma distributed? What is the probability that your plot will contain between `90 and 110 gm` of biomass? Now assume the data are lognormally distributed and redo this problem. Compare to the results where you assumed a gamma distribution.
+
+## Gamma distribution
+
+$$
+\begin{aligned}
+y_i \sim \sf{gamma}\Bigl( \cfrac{\mu^2}{\sigma^2}, \cfrac{\mu}{\sigma^2}\Bigr)\\
+y_i \sim \sf{gamma}\mathrm{\Bigl( \cfrac{103.4^2}{23^2}, \cfrac{103.4}{23^2}\Bigr)}
+\end{aligned}
+$$
+
+## Lognormal distribution
+
+$$
+\begin{aligned}
+y_i \sim \sf{lognormal}\mathrm{\Biggl(\log\biggl(\cfrac{\mu}{\sqrt{\frac{\sigma^{2}}{\mu^{2}} + 1}}\biggr)\textrm{, } \sqrt{\log\Bigl( \cfrac{\sigma^{2}}{\mu^{2}} +1  \Bigr) } \Biggr)}\\
+y_i \sim \sf{lognormal}\mathrm{\Biggl(\log\biggl(\cfrac{103.4}{\sqrt{\frac{23^{2}}{103.4^{2}} + 1}}\biggr)\textrm{, } \sqrt{\log\Bigl( \cfrac{23^{2}}{103.4^{2}} +1  \Bigr) } \Biggr)}
+\end{aligned}
+$$
+
+```{r}
+x <- 94
+mu <- 103.4
+sd <- 23
+#######################
+# assume gamma dist
+#######################
+# calculate the shape alpha for gamma dist
+alpha <- (mu^2)/(sd^2)
+# calculate the rate beta for gamma dist
+beta <- (mu)/(sd^2)
+# probability density f'n
+d_gamma <- dgamma(x = x, shape = alpha, rate = beta)
+# cumulative density f'n
+x_low <- 90
+x_high <- 110
+p_gamma <- pgamma(q = c(x_low, x_high), shape = alpha, rate = beta)
+p_gamma_cdf <- p_gamma[2] - p_gamma[1]
+#######################
+# assume lognormal dist
+#######################
+# meanlog 
+alpha = log( mu / sqrt((sd^2/mu^2)+1) )
+# sdlog
+beta = sqrt( log( (sd^2/mu^2)+1 ) )
+# probability density f'n
+d_lnorm <- dlnorm(x = x, meanlog = alpha, sdlog = beta)
+# cumulative density f'n
+p_lnorm <- plnorm(q = c(x_low, x_high), meanlog = alpha, sdlog = beta)
+p_lnorm_cdf <- p_lnorm[2] - p_lnorm[1]
+```
+
+## Answers
+
+What is the probability density of an observation of `94`?
+
+\textcolor{blue}{The probability density of an observation of `94` assuming the data are }\textcolor{teal}{gamma distributed: }`r round(d_gamma, 4)`
+
+\textcolor{blue}{The probability density of an observation of `94` assuming the data are }\textcolor{teal}{lognormally distributed: }`r round(d_lnorm, 4)`
+
+What is the probability that your plot will contain between `90 and 110 gm` of biomass?
+
+\textcolor{blue}{The probability that your plot will contain between `90 and 110 gm` of biomass assuming the data are }\textcolor{teal}{ gamma distributed: }`r round(p_gamma_cdf, 4)`
+
+\textcolor{blue}{The probability that your plot will contain between `90 and 110 gm` of biomass assuming the data are }\textcolor{teal}{lognormally distributed: }`r round(p_lnorm_cdf, 4)`
+
+# Question 3
+
+We are interested in the proportion ($\phi$) of Maryland counties that contain a coal fired power plant. Existing literature shows that that this proportion has a mean of $\mu=0.04$ with a standard deviation of $\sigma=0.01$. Write out a model for the distribution of $\phi$, conditional on $\mu$ and $\sigma$. The challenge here is to use moment matching for a random variable with support between 0-1. Plot the probability distribution of $\phi$.
+
+$$
+\begin{aligned}
+\phi \sim \sf{beta}\Biggl( \cfrac{\big(\mu^2 - \mu^3 - \mu \cdot \sigma^2\big)}{\sigma^2}, \cfrac{\big(\mu - 2\mu^2 + \mu^3 - \sigma^2 + \mu \cdot \sigma^2\big)}{\sigma^2}\Biggr)\\
+\phi \sim \sf{beta}\mathrm{ \Biggl( \cfrac{\big(0.04^2 - 0.04^3 - 0.04\cdot0.01^2\big)}{0.01^2}, \cfrac{\big(0.04 - 2\cdot0.04^2 + 0.04^3 - 0.01^2 + 0.04\cdot0.01^2\big)}{0.01^2}\Biggr)}\\
+\end{aligned}
+$$
+
+```{r}
+mu <- 0.04
+sigma <- 0.01
+# shape1
+alpha <- (mu^2 - mu^3 - mu * sigma^2) / sigma^2
+# shape2
+beta <- (mu - 2*mu^2 + mu^3 - sigma^2 +  mu * sigma^2) / sigma^2
+# x
+x <- seq(0, .15, .001)
+# pbeta
+d_beta <- dbeta(x = x, shape1 = alpha, shape2 = beta)
+# data
+dta <- data.frame(
+  x = x
+  , y = d_beta
+)
+# plot
+ggplot(data = dta, mapping = aes(x = x, y = y)) +
+  geom_line(
+    color = "gray30"
+    , lwd = 1.2
+  ) + 
+  xlab(latex2exp::TeX("$\\phi$")) +
+  ylab(latex2exp::TeX("\\[$\\phi$\\]")) +
+  theme_bw()
+```
+
+# Question 4
+
+If you visited 50 counties, what is the probability that 5 would contain a plant, conditional on the hypothesis that $\phi=0.04$?
+
+$$
+\begin{aligned}
+\Pr(y=5 \mid \phi, n=50) = \\
+\sf{binomial}\mathrm{\big(y=5\mid \phi=0.04,n=50\big) =}\\
+\mathrm{\binom{50}{5}\cdot0.04^5\cdot(1-0.04)^{50-5}}
+\end{aligned}
+$$
+```{r}
+x <- 5
+phi <- 0.04
+n <- 50
+d_binom <- dbinom(x = x, p = phi, size = n)
+```
+
+\textcolor{blue}{If you visited 50 counties the probability that 5 would contain a plant, conditional on the hypothesis that $\phi=0.04$ and assuming the data are }\textcolor{teal}{binomially distributed: }`r round(d_binom, 4)`
+
+# Question 5
+
+Plot the probability of the data for $y = 1...50$ counties with coal plants out of 50 counties visited conditional on the hypothesis $\phi=0.04$.
+
+```{r}
+x <- seq(0, 50)
+phi <- 0.04
+n <- 50
+y <- dbinom(x = x, p = phi, size = n)
+# plot
+ggplot(data = data.frame(x, y), mapping = aes(x = x, y = y)) +
+  geom_col(
+    fill = "gray70"
+    , width = 0.5
+  ) + 
+  xlab(latex2exp::TeX("$y$")) +
+  ylab(latex2exp::TeX("$Pr(y | \\phi)$")) +
+  theme_bw()
+```
+
+# Question 6
+
+
+
+
 
 # Question 9
 
@@ -295,4 +451,32 @@ Plot side-by-side histograms of the simulated data.
     )
 ```
 
+
+```{r, include=FALSE, eval=FALSE}
+# Assume we have observed the following counts of tadpoles in funnel traps
+#   from 6 different ponds: 7, 11, 54, 12, 2, 1 individuals.
+# Assuming these counts were generated using a Poisson process governed
+#   by lambda, compute a likelihood profile using R.
+# Eyeball this profile to determine the MLE.
+x <- c(7, 11, 54, 12, 2, 1)
+likelihood_lambda <- NA
+lambda <- seq(0, 40, length = 10000)
+for (i in 1:length(lambda)) {
+  likelihood_lambda[i] <- dpois(x = x, lambda = lambda[i])
+}
+dta <- data.frame(
+  lambda = lambda
+  , likelihood_lambda = likelihood_lambda
+) %>% 
+dplyr::mutate(
+  is_max = max(likelihood_lambda) == likelihood_lambda
+)
+ggplot() +
+  geom_line(data =dta, aes(x = lambda, y = likelihood_lambda), color = "navy", lwd = 1.5) +
+  geom_point(data = dta %>% dplyr::filter(is_max == TRUE), aes(x = lambda, y = likelihood_lambda), color = "gray50", size = 3) +
+  xlab(latex2exp::TeX("$\\lambda$")) +
+  ylab(latex2exp::TeX("$L(\\lambda)$")) +
+  theme_bw()
+
+```
 
